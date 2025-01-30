@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "infoworkspace",
+  "private_key_id": "5d0f898976efe099853dfdee637fbb62f643c05e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCj9FiYk+rjBi7N\n/I+A80er47PXnpidRYCpFvJAAydUFpxioh1+kWdeToDuRPOL8us9X/3R+LxNOQS5\nb/E8zAxT+JYEjFwJtF2yeYpyPy8duj/akTWo36a2w8CatyAe4c4PlfDWjhb0LhiI\nwk/1RtpAOrcYEby2V6W7XScZZrZ89A4Rzb/maQYxpfsttHm4LOwugGY439wfLDkt\nSRBlNqHFonDPO5TghKHgXAanGMbQ9TIWD51A+wTW7jkK0CZ7BJmwOjUf9PiEio7B\njsXoCn9amWgGu5NMX8LxswUFVY5H27chbSvhZ8aXExEYH4hL0mqnYZmOmGwt/jlb\nVyw8ffa/AgMBAAECggEAT22RPD2wtdIpe55G0URKrQHPfv501gA1T/VvX8aHV4vq\nsDf0jPwZNU1X1daunFaPUzj9SKs1Yj3kxYdvObJqqIWN+98ZuZPZLp0GDsoAY+j2\nhUcC1XCgHfugg/OCiqN/BfrwZakJgrsQJLTqMpvkIOixCeaR40572lTLG9mwP8Df\nzOtcxkKWvsydZb5NBifpbMcYSsCtSKYCZdaoMR7nnCMsQ3zi6sNpk5d71onohU51\nNxf6vkOq9Gp+p1jq833ylVCjoDDpSqcUZM1CaIiyPGhhLRZHMyBRPywZ1IcYLtaL\np4jH+R2x9hOlqoPaEHFRyiy4SnoVrQHqOI7Ve4mbRQKBgQDNbiRm/bz4YZPlQeRI\nKGZWUeSgcPkxMIU/SQfBgzmUpBQ0JU3PBzdBALLpXr5Q8noPdsyvl3JiP19TeQyv\nO1N7dtaNfVor/aEmUxupRYjA04kaS+tnSlD8QlbMeiagmUAhecbbnnr1IZFZIfmv\nnA2LOi6NEXcF1wKe/eP/xchTywKBgQDMUHkWhSuWmK+rbbuR7J+At/5jU876XAGF\nQ4xzvr9ye/Der9RtXOr9T2xKcrDZI/UARM7L7JdklPlwLwnC/511poSMffcvsNU7\nz6QpglzCtR2Bnb3xYspzRKFE9bjPY7Qc1yqIUSrOjND6I2TVuqWpnxTyBif3SBsL\nFGCfyJHSXQKBgAPMkafF8YS2aUHIIiyjcqEOCqhc7n7WYuB0vUv63Um+bxE3z2SQ\nwZjWJnjiY6qjkVZP4CEvL9JZUa39gxqKglS6MeWT9+LwYdaPmudafdjzEIoH9WaH\nnU/M+kX1zFkT/HeiBOdy2ttFr6ZyVmfE/wsgHFRHimf1PfsqvtiwE7BZAoGAN3bV\nGE74gT5b2f7E/50rw6avMUmsE3zskL/Anh83G54XymwTD8k8pZ1s+VzfM2M2fGcx\neFx20MA8Yr7yOHRpy2lz7Cu58cFgcYcxum8APX8rTmeDC8dUzCviV7UZAXvAhl/G\n1RCrvTyu8mivU/ICTOS5q+YN7WwuozhZ7qZlJ6UCgYEAoEJ1ld9AMxwJOHRqdg2L\nSSpvUzpiezEYy2BBQVFeU5bBzdy2BykPEGhQvk2UpcBGuJ2aKsF1UZneM/h1DLFe\ngOxfsnbdAKQumwZLTDBnzcBS2IDATf3jfQEuiQ9g17hSJHWzdrLnmX0/Rntts8pX\nIrM4KtgyPUMWqSprLb/xA4k=\n-----END PRIVATE KEY-----\n",
+  "client_email": "workspace-api-access@infoworkspace.iam.gserviceaccount.com",
+  "client_id": "117421848733206333227",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/workspace-api-access%40infoworkspace.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

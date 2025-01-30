@@ -1,0 +1,48 @@
+.form-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.form-select, .btn {
+    max-width: 400px;
+    margin: 0 auto;
+    display: block;
+}
+
+.card {
+    max-width: 600px;
+    margin: auto;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.sidebar .nav-link {
+    font-size: 14px;
+    color: white;
+}
+.sidebar .collapse .nav-link {
+    font-size: 13px;
+    padding-left: 25px;
+    color: #cfcfcf;
+}
+.sidebar .collapse .nav-link:hover {
+    color: white;
+    background-color: #007bff;
+}
+
+    .table-smaller tbody tr td {
+        font-size: 80%; /* 20% menor que o tamanho padrão */
+    }
+
+    .table-smaller thead th {
+        font-size: 85%; /* Deixe o cabeçalho um pouco maior */
+    }
+

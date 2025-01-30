@@ -1,0 +1,17 @@
+{
+    "name": "wendrewgomes/forecast",
+    "autoload": {
+        "psr-4": {
+            "Wendrewgomes\\Forecast\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "wendrewgomes"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^6.9",
+        "google/apiclient": "^2.18"
+    }
+}
