@@ -1,48 +1,114 @@
-.form-label {
-    font-weight: bold;
-    color: #333;
+/* 🔹 Ajuste no Layout da Sidebar */
+.sidebar {
+    height: 100vh;
+    width: 250px;
+    background-color: #133fa2;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+    transition: width 0.3s ease-in-out;
+    z-index: 1000;
 }
 
-.form-select, .btn {
-    max-width: 400px;
-    margin: 0 auto;
-    display: block;
+.sidebar .logo-container {
+    text-align: center;
+    padding-bottom: 15px;
 }
 
-.card {
-    max-width: 600px;
-    margin: auto;
+.sidebar .nav {
+    flex-grow: 1;
 }
 
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
-
-.sidebar .nav-link {
+.sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: white;
     font-size: 14px;
-    color: white;
-}
-.sidebar .collapse .nav-link {
-    font-size: 13px;
-    padding-left: 25px;
-    color: #cfcfcf;
-}
-.sidebar .collapse .nav-link:hover {
-    color: white;
-    background-color: #007bff;
+    text-decoration: none;
+    transition: background 0.3s;
 }
 
-    .table-smaller tbody tr td {
-        font-size: 80%; /* 20% menor que o tamanho padrão */
-    }
+.sidebar .nav-item i {
+    margin-right: 8px;
+}
 
-    .table-smaller thead th {
-        font-size: 85%; /* Deixe o cabeçalho um pouco maior */
-    }
+.sidebar .nav-item:hover {
+    background-color: #0056b3;
+}
 
+/* Sidebar recolhível */
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+}
+
+.sidebar.collapsed .nav-item span {
+    display: none;
+}
+
+/* 🔹 Ajuste na Barra Superior */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 250px;
+    width: calc(100% - 250px);
+    background: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease-in-out;
+    z-index: 999;
+}
+
+.top-bar .left-section {
+    display: flex;
+    align-items: center;
+}
+
+.top-bar .right-section {
+    display: flex;
+    align-items: center;
+}
+
+.top-bar .right-section button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.top-bar .right-section button:hover {
+    color: #0073ea;
+}
+
+/* 🔹 Ajuste no Conteúdo */
+.content {
+    margin-top: 70px; /* Ajuste para não sobrepor a barra superior */
+    margin-left: 250px; /* Alinhamento com a sidebar */
+    padding: 20px;
+    font-size: 14px;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* 🔹 Quando a Sidebar estiver recolhida */
+.sidebar.collapsed + .top-bar {
+    left: 80px;
+    width: calc(100% - 80px);
+}
+
+.sidebar.collapsed + .content {
+    margin-left: 80px;
+}

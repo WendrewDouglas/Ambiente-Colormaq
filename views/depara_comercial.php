@@ -55,7 +55,7 @@ if ($stmt === false) {
 <div class="content">
     <h2 class="mb-4"><i class="bi bi-person-badge"></i> Gestores Comerciais</h2>
 
-    <div class="card shadow-sm p-4">
+    <div class="card shadow-sm p-4, d-flex flex-column">
         <p class="text-muted">A tabela abaixo lista os gestores comerciais cadastrados no sistema.</p>
 
         <table class="table table-striped table-bordered">

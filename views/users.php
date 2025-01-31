@@ -42,7 +42,7 @@ if ($stmt === false) {
     ?>
 
 
-    <div class="card shadow-sm p-4">
+    <div class="card shadow-sm p-4; d-flex flex-column">
         <table class="table table-hover mt-3">
             <thead class="table-dark">
                 <tr>

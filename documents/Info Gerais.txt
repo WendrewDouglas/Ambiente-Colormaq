@@ -24,3 +24,9 @@ ID exclusivo: 113942334739147850329
 
 
 setx GOOGLE_APPLICATION_CREDENTIALS "C:\xampp\htdocs\forecast\chave-credencial.json"
+
+
+
+git add .
+git commit -m "Implementação da nova funcionalidade X"
+git push origin feature-nova-funcionalidade

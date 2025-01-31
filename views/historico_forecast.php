@@ -108,7 +108,7 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
     <h2 class="mb-4"><i class="bi bi-clock-history"></i> Histórico de Apontamentos</h2>
 
     <!-- Filtros -->
-    <div class="card shadow-sm p-4 mb-4">
+    <div class="card shadow-sm p-4 mb-4; d-flex flex-column">
         <form method="GET" action="index.php" id="filterForm">
             <input type="hidden" name="page" value="historico_forecast">
             <div class="row g-3">

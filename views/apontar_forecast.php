@@ -18,6 +18,23 @@ $conn = $db->getConnection();
 // Forçar o locale para exibir meses em português
 setlocale(LC_TIME, 'ptb.UTF-8', 'ptb', 'portuguese', 'portuguese_brazil');
 
+// Obtém o usuário logado
+$userName = $_SESSION['user_name'] ?? null;
+
+if (!$userName) {
+    die("<div class='alert alert-danger'>Erro: Usuário não identificado. Faça login novamente.</div>");
+}
+
+// Verificar se o usuário está cadastrado na tabela DEPARA_COMERCIAL
+$sql = "SELECT Regional FROM DW..DEPARA_COMERCIAL WHERE GNV = ?";
+$params = [$userName];
+$stmt = sqlsrv_query($conn, $sql, $params);
+
+$gestorInfo = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+
+// Verifica se o usuário está habilitado (se retornou dados)
+$usuarioHabilitado = ($gestorInfo !== null && $gestorInfo !== false);
+
 // Mapeamento de Empresas para CD
 $mapaCD = [
     '1001' => 'Matriz',
@@ -79,84 +96,108 @@ function obterQuantidadePorModelo($conn, $empresaSelecionada) {
 $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
 ?>
 
-<div class="content">
-    <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
-
-    <!-- Filtro para selecionar o CD -->
-    <form action="index.php?page=apontar_forecast" method="POST" id="filterForm">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label for="cd" class="form-label fw-bold">Centro de Distribuição:</label>
-                <select class="form-select" id="cd" name="cd" required>
-                    <option value="">Selecione o CD</option>
-                    <?php foreach ($mapaCD as $key => $value): ?>
-                        <option value="<?= $key; ?>" <?= ($cdSelecionado == $key) ? 'selected' : ''; ?>>
-                            <?= htmlspecialchars($value); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <!-- Mensagem abaixo do campo de seleção -->
-                <span id="mensagemCD" style="color: red; font-weight: bold; display: <?= $cdSelecionado ? 'none' : 'block'; ?>;">
-                    Informe um CD para apontar o forecast.
-                </span>
+    <!-- Exibição das informações do usuário -->
+    <?php if (!$usuarioHabilitado): ?>
+        <div class="content">
+            <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
+            <div class="alert alert-danger">
+                ⚠️ O usuário <strong><?= htmlspecialchars($userName); ?></strong> não está habilitado para realizar lançamentos no Forecast.
+                Entre em contato com a equipe de TI.
             </div>
         </div>
-    </form>
+        <?php include __DIR__ . '/../templates/footer.php'; ?>
+        <?php exit(); // Interrompe a execução do restante do código ?>
+    <?php endif; ?>
+    
+    <div class="content">
+    <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
 
-    <!-- Mensagens -->
-    <div id="updateMessage" class="alert alert-warning text-center mt-3" style="display: none;">
-        Atualizando dados...
+    <!-- Exibição das informações do usuário -->
+    <div class="alert alert-info">
+        <strong class="mb-5"><i class="bi bi-person-lines-fill"></i> INFORMAÇÕES DO GESTOR </strong><br>
+        <strong>Usuário:</strong> <?= htmlspecialchars($userName); ?> <br>
+        <strong>Código de Gestor:</strong> <?= htmlspecialchars($gestorInfo['Regional']); ?>
     </div>
-    <div id="successMessage" class="alert alert-success text-center mt-3" style="display: none;">
-        Dados atualizados com sucesso!
-    </div>
 
-    <!-- Formulário para envio dos dados de forecast -->
-    <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
-        <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
-
-        <div class="card shadow-sm p-3 mt-4">
-            <table class="table table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Linha</th>
-                        <th>Modelo</th>
-                        <th>Carteira</th>
-                        <?php foreach ($mesesForecast as $mes): ?>
-                            <th><?= htmlspecialchars($mes['label']); ?></th>
+    
+    <!-- Filtro para selecionar o CD -->
+    <?php if ($usuarioHabilitado): ?>
+        <!-- Filtro para selecionar o CD -->
+        <form action="index.php?page=apontar_forecast" method="POST" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="cd" class="form-label fw-bold">Centro de Distribuição:</label>
+                    <select class="form-select" id="cd" name="cd" required>
+                        <option value="">Selecione o CD</option>
+                        <?php foreach ($mapaCD as $key => $value): ?>
+                            <option value="<?= $key; ?>" <?= ($cdSelecionado == $key) ? 'selected' : ''; ?>>
+                                <?= htmlspecialchars($value); ?>
+                            </option>
                         <?php endforeach; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($resultados as $row): ?>
+                    </select>
+                    <span id="mensagemCD" style="color: red; font-weight: bold; display: <?= $cdSelecionado ? 'none' : 'block'; ?>;">
+                        Informe um CD para apontar o forecast.
+                    </span>
+                </div>
+            </div>
+        </form>
+
+        <!-- Mensagens -->
+        <div id="updateMessage" class="alert alert-warning text-center mt-3" style="display: none;">
+            Atualizando dados...
+        </div>
+        <div id="successMessage" class="alert alert-success text-center mt-3" style="display: none;">
+            Dados atualizados com sucesso!
+        </div>
+
+        <!-- Formulário para envio dos dados de forecast -->
+        <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
+            <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
+
+            <div class="card shadow-sm p-3 mt-4 d-flex flex-column">
+                <table class="table table-striped">
+                    <thead class="table-dark">
                         <tr>
-                            <td><?= htmlspecialchars($row['Linha_Produto'] ?? 'N/A'); ?></td>
-                            <td><?= htmlspecialchars($row['Modelo_Produto'] ?? 'N/A'); ?></td>
-                            <td><?= number_format($row['Quantidade_Total'], 0, ',', '.'); ?></td>
-                            
+                            <th>Linha</th>
+                            <th>Modelo</th>
+                            <th>Carteira</th>
                             <?php foreach ($mesesForecast as $mes): ?>
-                                <td>
-                                    <input type="number" class="form-control form-control-sm forecast-input" 
-                                        name="forecast[<?= htmlspecialchars($row['Modelo_Produto']); ?>][<?= $mes['value']; ?>]" 
-                                        min="0"
-                                        value="0"
-                                        <?= !$cdSelecionado ? 'disabled' : ''; ?>>
-                                </td>
+                                <th><?= htmlspecialchars($mes['label']); ?></th>
                             <?php endforeach; ?>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($resultados as $row): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($row['Linha_Produto'] ?? 'N/A'); ?></td>
+                                <td><?= htmlspecialchars($row['Modelo_Produto'] ?? 'N/A'); ?></td>
+                                <td><?= number_format($row['Quantidade_Total'], 0, ',', '.'); ?></td>
+                                
+                                <?php foreach ($mesesForecast as $mes): ?>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm forecast-input" 
+                                            name="forecast[<?= htmlspecialchars($row['Modelo_Produto']); ?>][<?= $mes['value']; ?>]" 
+                                            min="0"
+                                            value="0"
+                                            <?= !$cdSelecionado ? 'disabled' : ''; ?>>
+                                    </td>
+                                <?php endforeach; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
 
-        <!-- Botão único para enviar todos os apontamentos -->
-        <div class="mt-3 text-center">
-            <button type="submit" id="enviarForecast" class="btn btn-primary w-50" <?= !$cdSelecionado ? 'disabled' : ''; ?>>
-                <i class="bi bi-send"></i> Enviar Forecast
-            </button>
-        </div>
-    </form>
+            <div class="mt-3 text-center">
+                <button type="submit" id="enviarForecast" class="btn btn-primary w-50" <?= !$cdSelecionado ? 'disabled' : ''; ?>>
+                    <i class="bi bi-send"></i> Enviar Forecast
+                </button>
+            </div>
+        </form>
+    <?php endif; ?>
 </div>
+
+<?php include __DIR__ . '/../templates/footer.php'; ?>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -188,5 +229,3 @@ document.addEventListener("DOMContentLoaded", function () {
     atualizarEstadoCampos();
 });
 </script>
-
-<?php include __DIR__ . '/../templates/footer.php'; ?>
