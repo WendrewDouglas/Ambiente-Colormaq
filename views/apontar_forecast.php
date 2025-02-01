@@ -25,15 +25,35 @@ if (!$userName) {
     die("<div class='alert alert-danger'>Erro: Usuário não identificado. Faça login novamente.</div>");
 }
 
-// Verificar se o usuário está cadastrado na tabela DEPARA_COMERCIAL
-$sql = "SELECT Regional FROM DW..DEPARA_COMERCIAL WHERE GNV = ?";
-$params = [$userName];
+// Verificar se o usuário está cadastrado na tabela DEPARA_COMERCIAL como GNV, NomeRegional ou Analista
+$sql = "SELECT Regional, GNV, NomeRegional, Analista FROM DW..DEPARA_COMERCIAL 
+        WHERE GNV = ? OR NomeRegional = ? OR Analista = ?";
+$params = [$userName, $userName, $userName];
 $stmt = sqlsrv_query($conn, $sql, $params);
 
 $gestorInfo = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
 // Verifica se o usuário está habilitado (se retornou dados)
 $usuarioHabilitado = ($gestorInfo !== null && $gestorInfo !== false);
+
+$regionaisPermitidas = [];
+
+if ($usuarioHabilitado) {
+    // Se o usuário for encontrado, adiciona sua Regional à lista de opções disponíveis
+    do {
+        if (!empty($gestorInfo['Regional'])) {
+            $regionaisPermitidas[] = $gestorInfo['Regional'];
+        }
+    } while ($gestorInfo = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC));
+}
+
+// Remove duplicatas, caso o usuário apareça em mais de um cargo
+$regionaisPermitidas = array_unique($regionaisPermitidas);
+
+// Se o usuário não tem regionais associadas, ele não poderá lançar Forecast
+if (empty($regionaisPermitidas)) {
+    $usuarioHabilitado = false;
+}
 
 // Mapeamento de Empresas para CD
 $mapaCD = [
@@ -43,6 +63,8 @@ $mapaCD = [
 
 // Capturar filtros selecionados pelo usuário
 $cdSelecionado = $_POST['cd'] ?? '';
+$regionalSelecionado = $_POST['regional'] ?? '';
+
 $empresaSelecionada = isset($mapaCD[$cdSelecionado]) ? $cdSelecionado : null;
 
 // 🔹 Determinar os próximos 3 meses
@@ -97,7 +119,10 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
 ?>
 
     <!-- Exibição das informações do usuário -->
-    <?php if (!$usuarioHabilitado): ?>
+     
+    <?php 
+    // Exibir mensagem de erro caso o usuário não tenha permissões
+    if (!$usuarioHabilitado): ?>
         <div class="content">
             <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
             <div class="alert alert-danger">
@@ -108,6 +133,7 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
         <?php include __DIR__ . '/../templates/footer.php'; ?>
         <?php exit(); // Interrompe a execução do restante do código ?>
     <?php endif; ?>
+
     
     <div class="content">
     <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
@@ -139,6 +165,21 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
                         Informe um CD para apontar o forecast.
                     </span>
                 </div>
+                <div class="col-md-4">
+                    <label for="regional" class="form-label fw-bold">Código Regional:</label>
+                    <select class="form-select" id="regional" name="regional" required>
+                        <option value="">Selecione o Código Regional</option>
+                        <?php foreach ($regionaisPermitidas as $regional): ?>
+                            <option value="<?= htmlspecialchars($regional); ?>" <?= ($regionalSelecionado == $regional) ? 'selected' : ''; ?>>
+                                <?= htmlspecialchars($regional); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <!-- Mensagem abaixo do campo de seleção -->
+                    <span id="mensagemRegional" style="color: red; font-weight: bold; display: <?= $regionalSelecionado ? 'none' : 'block'; ?>;">
+                        Informe um Código Regional para apontar o forecast.
+                    </span>
+                </div>
             </div>
         </form>
 
@@ -153,6 +194,7 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
         <!-- Formulário para envio dos dados de forecast -->
         <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
             <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
+            <input type="hidden" name="regional" value="<?= htmlspecialchars($regionalSelecionado); ?>">
 
             <div class="card shadow-sm p-3 mt-4 d-flex flex-column">
                 <table class="table table-striped">
@@ -202,6 +244,7 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const cdSelect = document.getElementById("cd");
+    const regionalSelect = document.getElementById("regional");
     const mensagemCD = document.getElementById("mensagemCD");
     const forecastInputs = document.querySelectorAll(".forecast-input");
     const enviarForecastButton = document.getElementById("enviarForecast");
@@ -211,21 +254,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function atualizarEstadoCampos() {
         const cdSelecionado = cdSelect.value !== "";
-        forecastInputs.forEach(input => input.disabled = !cdSelecionado);
-        enviarForecastButton.disabled = !cdSelecionado;
+        const regionalSelecionado = regionalSelect.value !== "";
+
+        const habilitarForm = cdSelecionado && regionalSelecionado;
+        forecastInputs.forEach(input => input.disabled = !habilitarForm);
+        enviarForecastButton.disabled = !habilitarForm;
         mensagemCD.style.display = cdSelecionado ? "none" : "block";
     }
 
     cdSelect.addEventListener("change", function () {
         if (cdSelect.value === "") {
-            alert("Selecione um CD para apontar seu forecast.");
+            alert("Selecione um CD e um Código Regional para continuar.");
         } else {
             updateMessage.style.display = "block"; 
             successMessage.style.display = "none"; 
-            setTimeout(() => form.submit(), 500);
+            form.submit();
         }
     });
 
+    regionalSelect.addEventListener("change", function () {
+    if (regionalSelect.value === "") {
+        mensagemRegional.style.display = "block"; // Exibe a mensagem se não houver seleção
+    } else {
+        mensagemRegional.style.display = "none"; // Oculta a mensagem ao selecionar um Regional
+        updateMessage.style.display = "block"; 
+        successMessage.style.display = "none"; 
+        setTimeout(() => form.submit(), 500);
+    }     
+});    
     atualizarEstadoCampos();
+
 });
 </script>
