@@ -85,13 +85,14 @@ verificarPermissao('apontar_forecast');
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Capturar o Centro de Distribuição
     $cdSelecionado = $_POST['cd'] ?? null;
+    $regionalSelecionado = $_POST['regional'] ?? null;
     
-    // Verificar se um CD foi selecionado
-    if (!$cdSelecionado) {
-        $_SESSION['error_message'] = "Erro: Nenhum Centro de Distribuição selecionado.";
-        header("Location: index.php?page=apontar_forecast");
-        exit();
-    }
+// Verificar se ambos os filtros obrigatórios foram selecionados
+if (!$cdSelecionado || !$regionalSelecionado) {
+    $_SESSION['error_message'] = "Erro: Centro de Distribuição ou Código Regional não selecionado.";
+    header("Location: index.php?page=apontar_forecast");
+    exit();
+}
 
     // Criar conexão com o banco
     $db = new Database();
@@ -110,15 +111,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $quantidade = is_numeric($quantidade) ? intval($quantidade) : 0;
 
             // Debug - Log no servidor para verificar os valores recebidos
-            error_log("Inserindo: CD={$cdSelecionado}, Modelo={$modelo}, Mês={$mesReferencia}, Quantidade={$quantidade}");
+            error_log("Inserindo: CD={$cdSelecionado}, Regional={$regionalSelecionado}, Modelo={$modelo}, Mês={$mesReferencia}, Quantidade={$quantidade}");
 
-            // Query de inserção
-            $sql = "INSERT INTO forecast_entries (data_lancamento, modelo_produto, mes_referencia, empresa, quantidade)
-                    VALUES (GETDATE(), ?, ?, ?, ?)";
-
-            // Parâmetros da query
-            $params = [$modelo, $mesReferencia, $cdSelecionado, $quantidade];
-
+            $sql = "INSERT INTO forecast_entries (data_lancamento, modelo_produto, mes_referencia, empresa, cod_gestor, quantidade)
+            VALUES (GETDATE(), ?, ?, ?, ?, ?)";
+            $params = [$modelo, $mesReferencia, $cdSelecionado, $regionalSelecionado, $quantidade];
+    
             // Executar a query
             $stmt = sqlsrv_query($conn, $sql, $params);
 
