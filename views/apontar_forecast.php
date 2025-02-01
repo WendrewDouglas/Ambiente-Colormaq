@@ -151,35 +151,39 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
         <!-- Filtro para selecionar o CD -->
         <form action="index.php?page=apontar_forecast" method="POST" id="filterForm">
             <div class="row g-3">
-                <div class="col-md-4">
-                    <label for="cd" class="form-label fw-bold">Centro de Distribuição:</label>
-                    <select class="form-select" id="cd" name="cd" required>
-                        <option value="">Selecione o CD</option>
-                        <?php foreach ($mapaCD as $key => $value): ?>
-                            <option value="<?= $key; ?>" <?= ($cdSelecionado == $key) ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($value); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <span id="mensagemCD" style="color: red; font-weight: bold; display: <?= $cdSelecionado ? 'none' : 'block'; ?>;">
-                        Informe um CD para apontar o forecast.
-                    </span>
-                </div>
-                <div class="col-md-4">
-                    <label for="regional" class="form-label fw-bold">Código Regional:</label>
-                    <select class="form-select" id="regional" name="regional" required>
-                        <option value="">Selecione o Código Regional</option>
-                        <?php foreach ($regionaisPermitidas as $regional): ?>
-                            <option value="<?= htmlspecialchars($regional); ?>" <?= ($regionalSelecionado == $regional) ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($regional); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <!-- Mensagem abaixo do campo de seleção -->
-                    <span id="mensagemRegional" style="color: red; font-weight: bold; display: <?= $regionalSelecionado ? 'none' : 'block'; ?>;">
-                        Informe um Código Regional para apontar o forecast.
-                    </span>
-                </div>
+            <div class="col-md-4">
+            <label for="cd" class="form-label fw-bold">Centro de Distribuição:</label>
+            <select class="form-select" id="cd" name="cd" required>
+                <?php if (!$cdSelecionado): ?> 
+                    <option value="" selected disabled>Selecione o CD</option> 
+                <?php endif; ?>
+                <?php foreach ($mapaCD as $key => $value): ?>
+                    <option value="<?= $key; ?>" <?= ($cdSelecionado == $key) ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($value); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <span id="mensagemCD" style="color: red; font-weight: bold; display: <?= $cdSelecionado ? 'none' : 'block'; ?>;">
+                Informe um CD para apontar o forecast.
+            </span>
+        </div>
+
+        <div class="col-md-4">
+            <label for="regional" class="form-label fw-bold">Código Regional:</label>
+            <select class="form-select" id="regional" name="regional" required>
+                <?php if (!$regionalSelecionado): ?>
+                    <option value="" selected disabled>Selecione o Código Regional</option>
+                <?php endif; ?>
+                <?php foreach ($regionaisPermitidas as $regional): ?>
+                    <option value="<?= htmlspecialchars($regional); ?>" <?= ($regionalSelecionado == $regional) ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($regional); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <span id="mensagemRegional" style="color: red; font-weight: bold; display: <?= $regionalSelecionado ? 'none' : 'block'; ?>;">
+                Informe um Código Regional para apontar o forecast.
+            </span>
+        </div>
             </div>
         </form>
 
@@ -246,6 +250,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cdSelect = document.getElementById("cd");
     const regionalSelect = document.getElementById("regional");
     const mensagemCD = document.getElementById("mensagemCD");
+    const mensagemRegional = document.getElementById("mensagemRegional");
     const forecastInputs = document.querySelectorAll(".forecast-input");
     const enviarForecastButton = document.getElementById("enviarForecast");
     const updateMessage = document.getElementById("updateMessage");
@@ -259,30 +264,24 @@ document.addEventListener("DOMContentLoaded", function () {
         const habilitarForm = cdSelecionado && regionalSelecionado;
         forecastInputs.forEach(input => input.disabled = !habilitarForm);
         enviarForecastButton.disabled = !habilitarForm;
+        
+        // Exibir ou ocultar mensagens de erro conforme necessário
         mensagemCD.style.display = cdSelecionado ? "none" : "block";
+        mensagemRegional.style.display = regionalSelecionado ? "none" : "block";
     }
 
     cdSelect.addEventListener("change", function () {
-        if (cdSelect.value === "") {
-            alert("Selecione um CD e um Código Regional para continuar.");
-        } else {
-            updateMessage.style.display = "block"; 
-            successMessage.style.display = "none"; 
-            form.submit();
-        }
+        updateMessage.style.display = "block"; 
+        successMessage.style.display = "none"; 
+        form.submit();
     });
 
     regionalSelect.addEventListener("change", function () {
-    if (regionalSelect.value === "") {
-        mensagemRegional.style.display = "block"; // Exibe a mensagem se não houver seleção
-    } else {
-        mensagemRegional.style.display = "none"; // Oculta a mensagem ao selecionar um Regional
         updateMessage.style.display = "block"; 
         successMessage.style.display = "none"; 
-        setTimeout(() => form.submit(), 500);
-    }     
-});    
-    atualizarEstadoCampos();
+        form.submit();
+    });
 
+    atualizarEstadoCampos();
 });
 </script>
