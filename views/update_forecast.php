@@ -17,6 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $id = $_POST['id'] ?? null;
 $novoValor = $_POST['novo_valor'] ?? null;
 
+// Capturar usuário logado
+$usuarioLogado = $_SESSION['user_name'] ?? 'Desconhecido';
+
+// Capturar IP do usuário
+$ipUsuario = $_SERVER['REMOTE_ADDR'] ?? 'Desconhecido';
+
 // Validar os dados recebidos
 if (!$id || $novoValor === null || !is_numeric($novoValor) || $novoValor < 0) {
     http_response_code(400); // Requisição inválida
@@ -28,9 +34,14 @@ if (!$id || $novoValor === null || !is_numeric($novoValor) || $novoValor < 0) {
 $db = new Database();
 $conn = $db->getConnection();
 
-// Atualizar a quantidade no banco
-$sql = "UPDATE forecast_entries SET quantidade = ? WHERE id = ?";
-$params = [$novoValor, $id];
+// Atualizar a quantidade no banco e registrar usuário/IP/data da alteração
+$sql = "UPDATE forecast_entries 
+        SET quantidade = ?, 
+            ultimo_usuario_editou = ?, 
+            data_ultima_alteracao = GETDATE(), 
+            ip_ultima_alteracao = ?
+        WHERE id = ?";
+$params = [$novoValor, $usuarioLogado, $ipUsuario, $id];
 
 $stmt = sqlsrv_query($conn, $sql, $params);
 
