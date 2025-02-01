@@ -199,6 +199,8 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
         <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
             <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
             <input type="hidden" name="regional" value="<?= htmlspecialchars($regionalSelecionado); ?>">
+            <input type="hidden" name="usuario_apontamento" value="<?= htmlspecialchars($userName); ?>">
+
 
             <div class="card shadow-sm p-3 mt-4 d-flex flex-column">
                 <table class="table table-striped">
