@@ -38,7 +38,8 @@ $allowed_pages = [
     'historico_forecast',
     'update_forecast',
     'depara_comercial',
-    'process_update_comercial'
+    'process_update_comercial',
+    'export_forecast'
 ];
 
 if (in_array($page, $allowed_pages)) {
