@@ -22,8 +22,8 @@
             </a>
             <div class="collapse ms-3" id="forecastSubmenu">
                 <a href="index.php?page=apontar_forecast" class="nav-link">🛒 Apontar Forecast</a>
-                <a href="index.php?page=consulta_lancamentos" class="nav-link">📋 Consultar Apontamentos</a>
-                <a href="index.php?page=historico_forecast" class="nav-link">🕒 Histórico</a>
+                <a href="index.php?page=consulta_lancamentos" class="nav-link">📋 Relatório Detalhado</a>
+                <a href="index.php?page=historico_forecast" class="nav-link">🕒 Histórico Apontamentos</a>
             </div>
         </div>
 

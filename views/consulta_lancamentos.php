@@ -15,16 +15,28 @@ include __DIR__ . '/../templates/sidebar.php';
 $db = new Database();
 $conn = $db->getConnection();
 
+// Forçar o locale para exibir meses em português
+setlocale(LC_TIME, 'ptb.UTF-8', 'ptb', 'portuguese', 'portuguese_brazil');
+
 // Buscar lançamentos no banco de dados
 $sql = "SELECT 
-            data_lancamento, 
-            modelo_produto, 
-            mes_referencia, 
-            empresa, 
-            quantidade
-        FROM forecast_entries
-        ORDER BY data_lancamento DESC";
-$stmt = sqlsrv_query($conn, $sql);
+        CAST(f.mes_referencia AS DATE) AS mes_referencia, 
+        f.cod_produto, 
+        f.empresa, 
+        f.quantidade,
+        f.gestor,
+        i.DESCITEM,
+        i.LINHA,
+        i.MODELO,
+		i.STATUS
+    FROM Forecast_pcp f
+    LEFT JOIN (
+    SELECT DISTINCT CODITEM, DESCITEM, LINHA, MODELO, STATUS FROM V_DEPARA_ITEM
+) i ON f.cod_produto = i.CODITEM
+WHERE 1=1
+ORDER BY mes_referencia DESC";
+
+$stmt = sqlsrv_query($conn, $sql); 
 
 if ($stmt === false) {
     die("<div class='alert alert-danger'>Erro ao carregar os lançamentos.</div>");
@@ -38,21 +50,29 @@ if ($stmt === false) {
         <table class="table table-striped">
             <thead class="table-dark">
                 <tr>
-                    <th>Data de Lançamento</th>
-                    <th>Modelo</th>
-                    <th>Mês de Referência</th>
+                    <th>Mes Referência</th>
+                    <th>Gestor</th>
                     <th>Empresa</th>
+                    <th>SKU</th>
+                    <th>Linha</th>
+                    <th>Modelo</th>
+                    <th>Descrição</th>
                     <th>Quantidade</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 <?php while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)): ?>
                     <tr>
-                        <td><?= htmlspecialchars($row['data_lancamento']->format('d/m/Y')); ?></td>
-                        <td><?= htmlspecialchars($row['modelo_produto']); ?></td>
-                        <td><?= htmlspecialchars($row['mes_referencia']); ?></td>
+                        <td><?= htmlspecialchars($row['mes_referencia']->format('m/Y')); ?></td>
+                        <td><?= htmlspecialchars($row['gestor']); ?></td>
                         <td><?= htmlspecialchars($row['empresa']); ?></td>
+                        <td><?= htmlspecialchars($row['cod_produto']); ?></td>
+                        <td><?= htmlspecialchars($row['LINHA']); ?></td>
+                        <td><?= htmlspecialchars($row['MODELO']); ?></td>
+                        <td><?= htmlspecialchars($row['DESCITEM']); ?></td>
                         <td><?= number_format($row['quantidade'], 0, ',', '.'); ?></td>
+                        <td><?= htmlspecialchars($row['STATUS']); ?></td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
