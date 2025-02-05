@@ -9,6 +9,12 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 $db = new Database();
 $conn = $db->getConnection();
 
+ini_set('memory_limit', '512M');
+set_time_limit(300);
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Capturar filtros do formulário
 $mesReferencia = $_GET['mesReferencia'] ?? '';
 $gestor = $_GET['gestor'] ?? '';
@@ -68,13 +74,25 @@ $sql .= " ORDER BY f.mes_referencia DESC";
 
 $stmt = sqlsrv_query($conn, $sql, $params);
 
+
 if ($stmt === false) {
-    die("Erro ao carregar os dados: " . print_r(sqlsrv_errors(), true));
+    die("<div style='color: red;'>Erro ao carregar os dados: " . print_r(sqlsrv_errors(), true) . "</div>");
+}
+
+// Verificar se há dados para exportação
+if ($stmt === false || sqlsrv_has_rows($stmt) === false) {
+    die("<div style='color: orange;'>Nenhum dado encontrado para exportação.</div>");
 }
 
 // Criar nova planilha do Excel
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
+
+//verifica se existe saída da página antes do header
+if (headers_sent()) {
+    die("<div style='color: red;'>Erro: Cabeçalhos já foram enviados.</div>");
+}
+
 
 // Definir cabeçalhos
 $headers = ["Mês Referência", "Gestor", "Empresa", "SKU", "Linha", "Modelo", "Descrição", "Quantidade", "Status"];
@@ -83,32 +101,45 @@ $sheet->fromArray([$headers], NULL, 'A1');
 // Preencher os dados na planilha
 $rowIndex = 2;
 while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+    // Capturar e converter mes_referencia corretamente
+    $dataMes = $row['mes_referencia'];
+    if ($dataMes instanceof DateTime) {
+        $dataMes = $dataMes->format('F/Y');
+    } elseif (is_string($dataMes)) {
+        $dataMes = date('F/Y', strtotime($dataMes)); // Converte string para formato esperado
+    }
+
+    // Criar array de dados para a planilha
     $data = [
-        $row['mes_referencia'],
+        $dataMes,
         $row['gestor'],
         $row['empresa'],
         $row['cod_produto'],
         $row['LINHA'],
         $row['MODELO'],
         $row['DESCITEM'],
-        $row['quantidade'],
+        is_numeric($row['quantidade']) ? number_format($row['quantidade'], 0, ',', '.') : $row['quantidade'],
         $row['STATUS']
     ];
+
+    // Adicionar os dados à planilha
     $sheet->fromArray([$data], NULL, "A$rowIndex");
     $rowIndex++;
 }
 
-// Criar arquivo Excel para download
-$filename = "forecast_export.xlsx";
-header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-header("Content-Disposition: attachment; filename=$filename");
-header("Cache-Control: max-age=0");
-
-// Criar o arquivo e enviá-lo para o navegador
+// Criar e salvar o arquivo Excel localmente
+$filepath = __DIR__ . "/forecast_export.xlsx";
 $writer = new Xlsx($spreadsheet);
-$writer->save("php://output");
+$writer->save($filepath);
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-exit;
+// Enviar o arquivo para o navegador
+if (file_exists($filepath)) {
+    header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    header("Content-Disposition: attachment; filename=forecast_export.xlsx");
+    header("Content-Length: " . filesize($filepath));
+    readfile($filepath);
+    unlink($filepath); // Excluir o arquivo após o download
+    exit;
+} else {
+    die("Erro ao gerar o arquivo Excel.");
+}

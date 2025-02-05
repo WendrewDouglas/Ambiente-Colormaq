@@ -15,7 +15,7 @@ function verificarPermissao($requerido) {
 
     $permissoes = [
         'admin' => ['dashboard', 'users', 'consulta_lancamentos', 'apontar_forecast', 'configuracoes', 'depara_comercial'],
-        'gestor' => ['dashboard', 'apontar_forecast', 'configuracoes', 'depara_comercial'],
+        'gestor' => ['dashboard', 'apontar_forecast', 'configuracoes', 'depara_comercial','sales_demand'],
         'consulta' => ['dashboard', 'configuracoes']
     ];
 
