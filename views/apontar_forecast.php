@@ -35,16 +35,13 @@ $gestorInfo = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 $usuarioHabilitado = ($gestorInfo !== null && $gestorInfo !== false);
 $regionaisPermitidas = [];
 if ($usuarioHabilitado) {
-    // Se o usuário for encontrado, adiciona sua Regional à lista de opções disponíveis
     do {
         if (!empty($gestorInfo['Regional'])) {
             $regionaisPermitidas[] = $gestorInfo['Regional'];
         }
     } while ($gestorInfo = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC));
 }
-// Remove duplicatas, caso o usuário apareça em mais de um cargo
 $regionaisPermitidas = array_unique($regionaisPermitidas);
-// Se o usuário não tem regionais associadas, ele não poderá lançar Forecast
 if (empty($regionaisPermitidas)) {
     $usuarioHabilitado = false;
 }
@@ -60,10 +57,10 @@ $cdSelecionado = $_POST['cd'] ?? '';
 $regionalSelecionado = $_POST['regional'] ?? '';
 $empresaSelecionada = isset($mapaCD[$cdSelecionado]) ? $cdSelecionado : null;
 
-// 🔹 Determinar os próximos 3 meses
+// 🔹 Determinar os próximos 3 meses (o próximo mês é o definitivo)
 function obterProximosMeses($quantidade = 3) {
     $meses = [];
-    $data = new DateTime('first day of next month'); // Sempre o próximo mês
+    $data = new DateTime('first day of next month');
     for ($i = 0; $i < $quantidade; $i++) {
         $meses[] = [
             'label' => ucfirst(strftime('%B de %Y', $data->getTimestamp())),
@@ -75,12 +72,12 @@ function obterProximosMeses($quantidade = 3) {
 }
 $mesesForecast = obterProximosMeses();
 
-// 🔹 Verificar se já existe forecast para o próximo mês para a combinação CD/Regional
+// 🔹 Verificar se já existe forecast definitivo para o próximo mês (sem levar em conta o modelo)
 $forecastExiste = false;
 if (!empty($cdSelecionado) && !empty($regionalSelecionado)) {
-    // Sempre considerar o próximo mês (primeiro elemento do array)
-    $mesReferencia = $mesesForecast[0]['value'];
-    $sqlForecast = "SELECT 1 FROM forecast_entries WHERE empresa = ? AND cod_gestor = ? AND mes_referencia = ?";
+    $mesReferencia = $mesesForecast[0]['value']; // próximo mês
+    $sqlForecast = "SELECT 1 FROM forecast_entries 
+                    WHERE empresa = ? AND cod_gestor = ? AND mes_referencia = ? AND finalizado = 1";
     $paramsForecast = [$cdSelecionado, $regionalSelecionado, $mesReferencia];
     $stmtForecast = sqlsrv_query($conn, $sqlForecast, $paramsForecast);
     if ($stmtForecast !== false && sqlsrv_fetch_array($stmtForecast, SQLSRV_FETCH_ASSOC)) {
@@ -88,20 +85,24 @@ if (!empty($cdSelecionado) && !empty($regionalSelecionado)) {
     }
 }
 
-// 🔹 Buscar os produtos ativos na carteira de pedidos
-function obterQuantidadePorModelo($conn, $empresaSelecionada) {
+// 🔹 Buscar os produtos ativos na carteira de pedidos – filtrando também por regional (Cod_regional)
+function obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado) {
     $quantidades = [];
     $sql = "SELECT 
-            V.LINHA AS Linha_Produto,
-            V.MODELO AS Modelo_Produto,
-            SUM(C.Quantidade) AS Quantidade_Total
-        FROM V_CARTEIRA_PEDIDOS C
-        INNER JOIN V_DEPARA_ITEM V ON C.Cod_produto = V.MODELO
-        WHERE V.STATUS = 'ATIVO'";
+                V.LINHA AS Linha_Produto,
+                V.MODELO AS Modelo_Produto,
+                SUM(C.Quantidade) AS Quantidade_Total
+            FROM V_CARTEIRA_PEDIDOS C
+            INNER JOIN V_DEPARA_ITEM V ON C.Cod_produto = V.MODELO
+            WHERE V.STATUS = 'ATIVO'";
     $params = [];
     if ($empresaSelecionada) {
         $sql .= " AND C.Empresa = ?";
         $params[] = $empresaSelecionada;
+    }
+    if (!empty($regionalSelecionado)) {
+        $sql .= " AND C.Cod_regional = ?";
+        $params[] = $regionalSelecionado;
     }
     $sql .= " GROUP BY V.LINHA, V.MODELO ORDER BY V.LINHA, V.MODELO";
     $stmt = sqlsrv_query($conn, $sql, $params);
@@ -113,32 +114,11 @@ function obterQuantidadePorModelo($conn, $empresaSelecionada) {
     }
     return $quantidades;
 }
-$resultados = obterQuantidadePorModelo($conn, $empresaSelecionada);
+$resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado);
 ?>
-
-<!-- Exibição das informações do usuário -->
-<?php 
-if (!$usuarioHabilitado): ?>
-    <div class="content">
-        <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
-        <div class="alert alert-danger">
-            ⚠️ O usuário <strong><?= htmlspecialchars($userName); ?></strong> não está habilitado para realizar lançamentos no Forecast.
-            Entre em contato com a equipe de TI.
-        </div>
-    </div>
-    <?php include __DIR__ . '/../templates/footer.php'; ?>
-    <?php exit(); ?>
-<?php endif; ?>
 
 <div class="content">
     <h2 class="mb-4"><i class="bi bi-graph-up"></i> Apontar Forecast</h2>
-
-    <!-- Informações do Gestor -->
-    <div class="alert alert-info">
-        <strong class="mb-5"><i class="bi bi-person-lines-fill"></i> INFORMAÇÕES DO GESTOR </strong><br>
-        <strong>Usuário:</strong> <?= htmlspecialchars($userName); ?> <br>
-        <strong>Código de Gestor:</strong> <?= htmlspecialchars($gestorInfo['Regional']); ?>
-    </div>
 
     <!-- Filtro para selecionar o CD e Regional -->
     <?php if ($usuarioHabilitado): ?>
@@ -190,10 +170,10 @@ if (!$usuarioHabilitado): ?>
 
         <?php if (!empty($cdSelecionado) && !empty($regionalSelecionado) && $forecastExiste): ?>
             <div class="alert alert-warning text-center mt-3">
-                Já existe apontamento de forecast do <?= htmlspecialchars($regionalSelecionado); ?> para o <?= htmlspecialchars($mapaCD[$cdSelecionado]); ?> no mês de referência <?= htmlspecialchars($mesesForecast[0]['label']); ?>.
+                <i class="bi bi-emoji-smile"></i> Já existe apontamento de forecast para o regional selecionado. Caso queira editar, acesse o histórico de apontamentos, <a href="index.php?page=consulta_lancamentos">clique aqui</a>.
             </div>
         <?php elseif (!empty($cdSelecionado) && !empty($regionalSelecionado)): ?>
-            <!-- Formulário para envio dos dados de forecast -->
+            <!-- Exibe o formulário somente se NÃO houver forecast definitivo para o próximo mês -->
             <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
                 <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
                 <input type="hidden" name="regional" value="<?= htmlspecialchars($regionalSelecionado); ?>">
