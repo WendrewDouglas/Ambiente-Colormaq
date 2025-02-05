@@ -39,7 +39,9 @@ $allowed_pages = [
     'update_forecast',
     'depara_comercial',
     'process_update_comercial',
-    'export_forecast'
+    'export_forecast',
+    'enviar_sellout',
+    'export_sellout'
 ];
 
 if (in_array($page, $allowed_pages)) {

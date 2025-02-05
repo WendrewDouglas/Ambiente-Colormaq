@@ -14,9 +14,9 @@ function verificarPermissao($requerido) {
     $usuarioRole = $_SESSION['user_role'] ?? 'consulta'; 
 
     $permissoes = [
-        'admin' => ['dashboard', 'users', 'consulta_lancamentos', 'apontar_forecast', 'configuracoes', 'depara_comercial'],
-        'gestor' => ['dashboard', 'apontar_forecast', 'configuracoes', 'depara_comercial','sales_demand'],
-        'consulta' => ['dashboard', 'configuracoes']
+        'admin' => ['dashboard', 'users', 'consulta_lancamentos', 'apontar_forecast', 'configuracoes', 'depara_comercial','enviar_sellout'],
+        'gestor' => ['dashboard', 'apontar_forecast', 'configuracoes', 'depara_comercial','sales_demand','enviar_sellout'],
+        'consulta' => ['dashboard', 'configuracoes','enviar_sellout']
     ];
 
     if (!in_array($requerido, $permissoes[$usuarioRole])) {

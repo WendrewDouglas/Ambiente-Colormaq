@@ -85,16 +85,15 @@ if (!empty($cdSelecionado) && !empty($regionalSelecionado)) {
     }
 }
 
-// 🔹 Buscar os produtos ativos na carteira de pedidos – filtrando também por regional (Cod_regional)
+// 🔹 Buscar os produtos ativos na carteira de pedidos – agora usando LEFT JOIN para trazer todos os produtos ativos
 function obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado) {
     $quantidades = [];
     $sql = "SELECT 
                 V.LINHA AS Linha_Produto,
                 V.MODELO AS Modelo_Produto,
-                SUM(C.Quantidade) AS Quantidade_Total
-            FROM V_CARTEIRA_PEDIDOS C
-            INNER JOIN V_DEPARA_ITEM V ON C.Cod_produto = V.MODELO
-            WHERE V.STATUS = 'ATIVO'";
+                ISNULL(SUM(C.Quantidade), 0) AS Quantidade_Total
+            FROM V_DEPARA_ITEM V
+            LEFT JOIN V_CARTEIRA_PEDIDOS C ON C.Cod_produto = V.MODELO";
     $params = [];
     if ($empresaSelecionada) {
         $sql .= " AND C.Empresa = ?";
@@ -104,7 +103,9 @@ function obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSeleciona
         $sql .= " AND C.Cod_regional = ?";
         $params[] = $regionalSelecionado;
     }
-    $sql .= " GROUP BY V.LINHA, V.MODELO ORDER BY V.LINHA, V.MODELO";
+    $sql .= " WHERE V.STATUS = 'ATIVO'
+              GROUP BY V.LINHA, V.MODELO
+              ORDER BY V.LINHA, V.MODELO";
     $stmt = sqlsrv_query($conn, $sql, $params);
     if ($stmt === false) {
         die("<div class='alert alert-danger'>Erro ao carregar dados da carteira.</div>");
@@ -168,12 +169,16 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSele
             Dados atualizados com sucesso!
         </div>
 
-        <?php if (!empty($cdSelecionado) && !empty($regionalSelecionado) && $forecastExiste): ?>
-            <div class="alert alert-warning text-center mt-3">
-                <i class="bi bi-emoji-smile"></i> Já existe apontamento de forecast para o regional selecionado. Caso queira editar, acesse o histórico de apontamentos, <a href="index.php?page=consulta_lancamentos">clique aqui</a>.
+        <?php if (empty($cdSelecionado) || empty($regionalSelecionado) || $forecastExiste): ?>
+            <div class="text-center mt-3">
+                <?php if($forecastExiste): ?>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-emoji-smile"></i> Já existe apontamento de forecast para o regional selecionado. Caso queira editar, acesse o histórico de apontamentos, <a href="index.php?page=consulta_lancamentos">clique aqui</a>.
+                    </div>
+                <?php endif; ?>
+                <img src="../public/assets/img/apontar forecast.jpg" alt="Apontar Forecast" class="img-fluid" />
             </div>
-        <?php elseif (!empty($cdSelecionado) && !empty($regionalSelecionado)): ?>
-            <!-- Exibe o formulário somente se NÃO houver forecast definitivo para o próximo mês -->
+        <?php else: ?>
             <form action="index.php?page=process_forecast" method="POST" id="forecastForm">
                 <input type="hidden" name="cd" value="<?= htmlspecialchars($cdSelecionado); ?>">
                 <input type="hidden" name="regional" value="<?= htmlspecialchars($regionalSelecionado); ?>">

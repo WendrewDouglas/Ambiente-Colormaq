@@ -27,6 +27,13 @@
             </div>
         </div>
 
+        <!-- Menu Forecast com Dropdown -->
+        <li class="nav-item">
+            <a class="nav-link" href="index.php?page=enviar_sellout">
+                <i class="bi bi-upload"></i> Enviar Sell-Out
+            </a>
+        </li>
+
         <!-- Menu Configurações com Dropdown -->
         <div class="nav-item">
             <a 
