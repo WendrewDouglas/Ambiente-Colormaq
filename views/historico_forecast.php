@@ -189,6 +189,21 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
         </form>
     </div>
 
+    <!-- Prazo para Edição -->
+    <?php
+    $now = new DateTime();
+    $deadline = new DateTime(date('Y-m-15 23:30:00'));
+    if ($now > $deadline) {
+        $editCountdown = "Prazo encerrado para edição";
+    } else {
+        $interval = $now->diff($deadline);
+        $editCountdown = $interval->format('%d dias, %h horas e %i minutos restantes');
+    }
+    ?>
+    <div class="mt-4 alert alert-info">
+        <strong>Prazo máximo para edição:</strong> <?php echo $deadline->format('d/m/Y H:i'); ?> - <?php echo $editCountdown; ?>
+    </div>
+
     <!-- Tabela -->
     <div class="card shadow-sm p-4">
         <table class="table table-striped">
