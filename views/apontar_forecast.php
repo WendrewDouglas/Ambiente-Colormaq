@@ -173,7 +173,7 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSele
             <div class="text-center mt-3">
                 <?php if($forecastExiste): ?>
                     <div class="alert alert-warning">
-                        <i class="bi bi-emoji-smile"></i> Já existe apontamento de forecast para o regional selecionado. Caso queira editar, acesse o histórico de apontamentos, <a href="index.php?page=consulta_lancamentos">clique aqui</a>.
+                        <i class="bi bi-emoji-smile"></i> Já existe apontamento de forecast para o regional selecionado. Caso queira editar, acesse o histórico de apontamentos, <a href="index.php?page=historico_forecast">clique aqui</a>.
                     </div>
                 <?php endif; ?>
                 <img src="../public/assets/img/apontar forecast.jpg" alt="Apontar Forecast" class="img-fluid" />
