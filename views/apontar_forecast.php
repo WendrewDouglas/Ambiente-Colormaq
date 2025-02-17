@@ -85,37 +85,49 @@ if (!empty($cdSelecionado) && !empty($regionalSelecionado)) {
     }
 }
 
-// 🔹 Buscar os produtos ativos na carteira de pedidos – agora usando LEFT JOIN para trazer todos os produtos ativos
-function obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado) {
+// 🔹 Buscar os produtos ativos na carteira de pedidos – distribuindo os valores por mês com base na Data_agendada
+function obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado, $mesesForecast) {
     $quantidades = [];
+    $params = [];
+    $carteiraColumns = "";
+    
+    foreach ($mesesForecast as $index => $mes) {
+        // $mes['value'] está no formato "m/Y", por exemplo "03/2025"
+        list($mesNum, $ano) = explode('/', $mes['value']);
+        $carteiraColumns .= "ISNULL(SUM(CASE WHEN MONTH(C.Data_agendada) = ? AND YEAR(C.Data_agendada) = ? THEN C.Quantidade ELSE 0 END), 0) as Carteira_Mes" . ($index+1) . ", ";
+        $params[] = (int)$mesNum;
+        $params[] = (int)$ano;
+    }
+    $carteiraColumns = rtrim($carteiraColumns, ", ");
+    
     $sql = "SELECT 
                 V.LINHA AS Linha_Produto,
                 V.MODELO AS Modelo_Produto,
-                ISNULL(SUM(C.Quantidade), 0) AS Quantidade_Total
+                $carteiraColumns
             FROM V_DEPARA_ITEM V
             LEFT JOIN V_CARTEIRA_PEDIDOS C ON C.Cod_produto = V.MODELO";
-    $params = [];
     if ($empresaSelecionada) {
-        $sql .= " AND C.Empresa = ?";
-        $params[] = $empresaSelecionada;
+         $sql .= " AND C.Empresa = ?";
+         $params[] = $empresaSelecionada;
     }
     if (!empty($regionalSelecionado)) {
-        $sql .= " AND C.Cod_regional = ?";
-        $params[] = $regionalSelecionado;
+         $sql .= " AND C.Cod_regional = ?";
+         $params[] = $regionalSelecionado;
     }
     $sql .= " WHERE V.STATUS = 'ATIVO'
               GROUP BY V.LINHA, V.MODELO
               ORDER BY V.LINHA, V.MODELO";
+              
     $stmt = sqlsrv_query($conn, $sql, $params);
     if ($stmt === false) {
-        die("<div class='alert alert-danger'>Erro ao carregar dados da carteira.</div>");
+         die("<div class='alert alert-danger'>Erro ao carregar dados da carteira.</div>");
     }
     while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-        $quantidades[] = $row;
+         $quantidades[] = $row;
     }
     return $quantidades;
 }
-$resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado);
+$resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSelecionado, $mesesForecast);
 ?>
 
 <div class="content">
@@ -189,8 +201,11 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSele
                             <tr>
                                 <th>Linha</th>
                                 <th>Modelo</th>
-                                <th>Carteira</th>
-                                <?php foreach ($mesesForecast as $mes): ?>
+                                <?php foreach ($mesesForecast as $mes): 
+                                    $parts = explode(' de ', $mes['label']);
+                                    $monthName = $parts[0];
+                                ?>
+                                    <th>Carteira <?= htmlspecialchars($monthName); ?></th>
                                     <th><?= htmlspecialchars($mes['label']); ?></th>
                                 <?php endforeach; ?>
                             </tr>
@@ -200,14 +215,14 @@ $resultados = obterQuantidadePorModelo($conn, $empresaSelecionada, $regionalSele
                                 <tr>
                                     <td><?= htmlspecialchars($row['Linha_Produto'] ?? 'N/A'); ?></td>
                                     <td><?= htmlspecialchars($row['Modelo_Produto'] ?? 'N/A'); ?></td>
-                                    <td><?= number_format($row['Quantidade_Total'], 0, ',', '.'); ?></td>
-                                    <?php foreach ($mesesForecast as $mes): ?>
+                                    <?php for ($i = 1; $i <= count($mesesForecast); $i++): ?>
+                                        <td><?= number_format($row["Carteira_Mes{$i}"], 0, ',', '.'); ?></td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm forecast-input" 
-                                                name="forecast[<?= htmlspecialchars($row['Modelo_Produto']); ?>][<?= $mes['value']; ?>]" 
+                                                name="forecast[<?= htmlspecialchars($row['Modelo_Produto']); ?>][<?= $mesesForecast[$i-1]['value']; ?>]" 
                                                 min="0" value="0">
                                         </td>
-                                    <?php endforeach; ?>
+                                    <?php endfor; ?>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

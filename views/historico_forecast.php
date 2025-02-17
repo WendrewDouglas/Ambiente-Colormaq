@@ -192,7 +192,7 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
     <!-- Prazo para Edição -->
     <?php
     $now = new DateTime();
-    $deadline = new DateTime(date('Y-m-15 23:30:00'));
+    $deadline = new DateTime(date('Y-m-21 23:30:00'));
     if ($now > $deadline) {
         $editCountdown = "Prazo encerrado para edição";
     } else {

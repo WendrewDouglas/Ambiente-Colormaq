@@ -30,7 +30,7 @@ function formatDate($dateString) {
     // Se a data estiver no formato DD/MM/YYYY
     $dateObj = DateTime::createFromFormat('d/m/Y', $dateString);
     if ($dateObj && $dateObj->format('d/m/Y') === $dateString) {
-        return $dateObj->format('Y-m-d');
+        return $dateObj->format('Y-m-d'); // Retorna formato correto para SQL
     }
 
     // Se a data for um número serial do Excel
@@ -94,10 +94,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES['excel_file'])) {
                 if ($headersLower !== $expectedLower) {
                     $errorMessage = "Arquivo fora do padrão. Verifique as colunas obrigatórias e tente novamente.";
                 } else {
-                    $inserted = 0;
                     $insertData = [];
                     $usuarioLogado = $_SESSION['user_name'] ?? 'Não identificado';
-                    $dataEnvio = date('Y-m-d H:i:s');
+                    $dataEnvio = date('Y-m-d H:i:s'); // Formato correto para SQL Server
                     $ipEnvio = getUserIP();
 
                     for ($row = 2; $row <= $highestRow; $row++) {
@@ -126,18 +125,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES['excel_file'])) {
                         }
 
                         $insertData[] = [
-                            $dataReferencia, // Data
-                            trim($data[1]),  // Cód. Cliente
-                            trim($data[2]),  // Varejo
-                            trim($data[3]),  // Bandeira
-                            trim($data[4]),  // Filial/CD
-                            trim($data[5]),  // Cód. Prod. Colormaq
-                            trim($data[6]),  // Tipo Venda
-                            is_numeric($data[7]) ? (int)$data[7] : 0,  // Qtde Venda
-                            is_numeric($data[8]) ? (int)$data[8] : 0,  // Qtde Estoque
-                            is_numeric($data[9]) ? (float)$data[9] : 0.0,  // Vlr Venda
-                            trim($data[10]), // Cidade
-                            trim($data[11]), // UF
+                            $dataReferencia,
+                            trim($data[1]),
+                            trim($data[2]),
+                            trim($data[3]),
+                            trim($data[4]),
+                            trim($data[5]),
+                            trim($data[6]),
+                            is_numeric($data[7]) ? (int)$data[7] : 0,
+                            is_numeric($data[8]) ? (int)$data[8] : 0,
+                            is_numeric($data[9]) ? (float)$data[9] : 0.0,
+                            trim($data[10]),
+                            trim($data[11]),
                             $usuarioLogado,
                             $dataEnvio,
                             $ipEnvio
@@ -147,21 +146,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES['excel_file'])) {
                     if (!empty($insertData)) {
                         $sqlInsert = "INSERT INTO SellOutColor 
                             (data_referencia, cod_cliente, varejo, bandeira, filial_cd, cod_prod_colormaq, tipo_venda, qtde_venda, qtde_estoque, vlr_venda, cidade, uf, user_import, data_envio, ip_envio) 
-                            VALUES ";
-                        $values = [];
-                        $params = [];
-                        foreach ($insertData as $row) {
-                            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                            array_push($params, ...$row);
-                        }
-                        $sqlInsert .= implode(",", $values);
+                            VALUES (CONVERT(DATE, ?, 120), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CONVERT(DATETIME, ?, 120), ?)";
 
-                        $stmtInsert = sqlsrv_query($conn, $sqlInsert, $params);
-                        if ($stmtInsert === false) {
-                            $errorMessage = "Erro ao inserir registros: " . print_r(sqlsrv_errors(), true);
-                        } else {
-                            $successMessage = "Arquivo importado com sucesso. Registros inseridos: " . count($insertData);
+                        foreach ($insertData as $row) {
+                            $stmtInsert = sqlsrv_query($conn, $sqlInsert, $row);
+                            if ($stmtInsert === false) {
+                                $errorMessage = "Erro ao inserir registros: " . print_r(sqlsrv_errors(), true);
+                                break;
+                            }
                         }
+
+                        $successMessage = "Arquivo importado com sucesso. Registros inseridos: " . count($insertData);
                     }
                 }
             } catch (Exception $e) {
